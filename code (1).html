@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor Financiero Personal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --primary: #7e22ce;
+            --primary-light: #a855f7;
+            --accent: #d8b4fe;
+            --text-light: #e2e8f0;
+        }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .card-gradient {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        }
+        
+        .card-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+        
+        .input-field {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+        }
+        
+        .input-field:focus {
+            border-color: var(--primary-light);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(167, 85, 247, 0.5);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            transition: all 0.2s;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-1px);
+        }
+        
+        .scroll-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .scroll-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: var(--primary-light);
+            border-radius: 10px;
+        }
+        
+        .transaction-item {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s;
+        }
+        
+        .transaction-item:hover {
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+        
+        .toggle-bg::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            background-color: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            transform: translateX(0);
+        }
+        
+        input:checked + .toggle-bg::after {
+            transform: translateX(100%);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-purple-300 flex items-center">
+                <i class="fas fa-wallet mr-3"></i>
+                Gestor Financiero
+            </h1>
+            <button id="theme-toggle" class="p-2 rounded-full bg-purple-900 hover:bg-purple-700 transition">
+                <i class="fas fa-moon"></i>
+            </button>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <!-- Total Cards -->
+            <div class="bg-gradient-to-br from-purple-900 to-purple-700 rounded-xl p-6 text-white shadow-xl">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-purple-200 text-sm">Tarjetas Activas</p>
+                        <h2 class="text-3xl font-bold mt-2" id="total-cards">2</h2>
+                    </div>
+                    <div class="bg-purple-800 p-3 rounded-lg">
+                        <i class="fas fa-credit-card text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-purple-800 text-purple-200 text-sm">
+                    <div class="flex justify-between items-center mb-1">
+                        <span>Crédito Total:</span>
+                        <span class="font-medium" id="total-credit">$0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span>Disponible:</span>
+                        <span class="font-medium" id="total-available">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deudas -->
+            <div class="bg-gradient-to-br from-purple-900 to-purple-700 rounded-xl p-6 text-white shadow-xl">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-purple-200 text-sm">Total Deudas</p>
+                        <h2 class="text-3xl font-bold mt-2" id="total-debt">$0.00</h2>
+                    </div>
+                    <div class="bg-purple-800 p-3 rounded-lg">
+                        <i class="fas fa-file-invoice-dollar text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-purple-800 text-purple-200 text-sm">
+                    <div class="flex justify-between items-center mb-1">
+                        <span>Interés Mensual:</span>
+                        <span class="font-medium" id="monthly-interest">$0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span>Plazo Restante:</span>
+                        <span class="font-medium" id="remaining-term">0 meses</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ahorros -->
+            <div class="bg-gradient-to-br from-purple-900 to-purple-700 rounded-xl p-6 text-white shadow-xl">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-purple-200 text-sm">Total Ahorros</p>
+                        <h2 class="text-3xl font-bold mt-2" id="total-savings">$0.00</h2>
+                    </div>
+                    <div class="bg-purple-800 p-3 rounded-lg">
+                        <i class="fas fa-piggy-bank text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-purple-800 text-purple-200 text-sm">
+                    <div class="flex justify-between items-center mb-1">
+                        <span>Meta Mensual:</span>
+                        <span class="font-medium" id="monthly-goal">$0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span>Progreso:</span>
+                        <span class="font-medium" id="savings-progress">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ingresos -->
+            <div class="bg-gradient-to-br from-purple-900 to-purple-700 rounded-xl p-6 text-white shadow-xl">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-purple-200 text-sm">Total Ingresos</p>
+                        <h2 class="text-3xl font-bold mt-2" id="total-income">$0.00</h2>
+                    </div>
+                    <div class="bg-purple-800 p-3 rounded-lg">
+                        <i class="fas fa-money-bill-wave text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-purple-800 text-purple-200 text-sm">
+                    <div class="flex justify-between items-center mb-1">
+                        <span>Promedio Mensual:</span>
+                        <span class="font-medium" id="monthly-average">$0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span>Ingresos este mes:</span>
+                        <span class="font-medium" id="income-month">$0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Sección de Tarjetas -->
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-purple-300">
+                        <i class="fas fa-credit-card mr-2"></i>Mis Tarjetas
+                    </h2>
+                    <button id="add-card-btn" class="btn-primary text-white px-4 py-2 rounded-lg flex items-center">
+                        <i class="fas fa-plus mr-2"></i> Añadir
+                    </button>
+                </div>
+
+                <div id="cards-container" class="space-y-4 max-h-96 overflow-y-auto scroll-container">
+                    <!-- Las tarjetas se añadirán aquí dinámicamente -->
+                </div>
+
+                <!-- Modal para añadir tarjeta -->
+                <div id="card-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold text-purple-300">Añadir Tarjeta</h3>
+                            <button id="close-card-modal" class="text-gray-400 hover:text-white">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Nombre del Banco</label>
+                                <input type="text" id="bank-name" class="input-field w-full p-3 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Número de Tarjeta</label>
+                                <input type="text" id="card-number" class="input-field w-full p-3 rounded-lg">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-1">Fecha de Expiración</label>
+                                    <input type="text" id="expiry-date" placeholder="MM/YY" class="input-field w-full p-3 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-1">CVV</label>
+                                    <input type="text" id="cvv" class="input-field w-full p-3 rounded-lg">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Límite de Crédito</label>
+                                <input type="number" id="credit-limit" class="input-field w-full p-3 rounded-lg">
+                            </div>
+                            <button id="save-card-btn" class="btn-primary text-white w-full py-3 rounded-lg mt-4 flex justify-center items-center">
+                                <i class="fas fa-save mr-2"></i> Guardar Tarjeta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de Deudas -->
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-purple-300">
+                        <i class="fas fa-file-invoice-dollar mr-2"></i>Mis Deudas
+                    </h2>
+                    <button id="add-debt-btn" class="btn-primary text-white px-4 py-2 rounded-lg flex items-center">
+                        <i class="fas fa-plus mr-2"></i> Añadir
+                    </button>
+                </div>
+
+                <div id="debts-container" class="space-y-4 max-h-96 overflow-y-auto scroll-container">
+                    <!-- Las deudas se añadirán aquí dinámicamente -->
+                </div>
+
+                <!-- Modal para añadir deuda -->
+                <div id="debt-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold text-purple-300">Añadir Deuda</h3>
+                            <button id="close-debt-modal" class="text-gray-400 hover:text-white">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Nombre de la Deuda</label>
+                                <input type="text" id="debt-name" class="input-field w-full p-3 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Cantidad</label>
+                                <input type="number" id="debt-amount" class="input-field w-full p-3 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Tasa de Interés (%)</label>
+                                <input type="number" id="debt-interest" class="input-field w-full p-3 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Plazo (meses)</label>
+                                <input type="number" id="debt-term" class="input-field w-full p-3 rounded-lg">
+                            </div>
+                            <div class="flex items-center">
+                                <label class="block text-sm font-medium text-gray-300 mb-1 mr-4">Asociar a Tarjeta</label>
+                                <div class="relative inline-block w-12 mr-2 align-middle select-none">
+                                    <input type="checkbox" id="link-to-card" class="sr-only">
+                                    <div class="toggle-bg block bg-gray-600 w-12 h-6 rounded-full"></div>
+                                </div>
+                                <select id="card-select" class="input-field p-2 rounded-lg hidden">
+                                    <!-- Opciones de tarjetas se añadirán dinámicamente -->
+                                </select>
+                            </div>
+                            <button id="save-debt-btn" class="btn-primary text-white w-full py-3 rounded-lg mt-4 flex justify-center items-center">
+                                <i class="fas fa-save mr-2"></i> Guardar Deuda
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Sección de Ahorros -->
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-purple-300">
+                        <i class="fas fa-piggy-bank mr-2"></i>Mis Ahorros
+                    </h2>
+                    <button id="add-savings-btn" class="btn-primary text-white px-4 py-2 rounded-lg flex items-center">
+                        <i class="fas fa-plus mr-2"></i> Añadir
+                    </button>
+                </div>
+
+                <div id="savings-container" class="space-y-4 max-h-96 overflow-y-auto scroll-container">
+                    <!-- Los ahorros se añadirán aquí dinámicamente -->
+                </div>
+
+                <!-- Modal para añadir ahorros -->
+                <div id="savings-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold text-purple-300">Añadir Meta de Ahorro</h3>
+                            <button id="close-savings-modal" class="text-gray-400 hover:text-white">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Nombre de la Meta</label>
+                                <input type="text" id="savings-name" class="input-field w-full p-3 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Cantidad Objetivo</label>
+                                <input type="number" id="savings-goal" class="input-field w-full p-3 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Cantidad Actual</label>
+                                <input type="number" id="savings-current" class="input-field w-full p-3 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Fecha Objetivo</label>
+                                <input type="date" id="savings-date" class="input-field w-full p-3 rounded-lg">
+                            </div>
+                            <button id="save-savings-btn" class="btn-primary text-white w-full py-3 rounded-lg mt-4 flex justify-center items-center">
+                                <i class="fas fa-save mr-2"></i> Guardar Meta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de Ingresos -->
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-purple-300">
+                        <i class="fas fa-money-bill-wave mr-2"></i>Mis Ingresos
+                    </h2>
+                    <button id="add-income-btn" class="btn-primary text-white px-4 py-2 rounded-lg flex items-center">
+                        <i class="fas fa-plus mr-2"></i> Añadir
+                    </button>
+                </div>
+
+                <div id="income-container" class="space-y-4 max-h-96 overflow-y-auto scroll-container">
+                    <!-- Los ingresos se añadirán aquí dinámicamente -->
+                </div>
+
+                <!-- Modal para añadir ingresos -->
+                <div id="income-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold text-purple-300">Añadir Ingreso</h3>
+                            <button id="close-income-modal" class="text-gray-400 hover:text-white">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Fuente</label>
+                                <input type="text" id="income-source" class="input-field w-full p-3 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Cantidad</label>
+                                <input type="number" id="income-amount" class="input-field w-full p-3 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Fecha</label>
+                                <input type="date" id="income-date" class="input-field w-full p-3 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Frecuencia</label>
+                                <select id="income-frequency" class="input-field w-full p-3 rounded-lg">
+                                    <option value="única">Única</option>
+                                    <option value="semanal">Semanal</option>
+                                    <option value="quincenal">Quincenal</option>
+                                    <option value="mensual" selected>Mensual</option>
+                                    <option value="anual">Anual</option>
+                                </select>
+                            </div>
+                            <button id="save-income-btn" class="btn-primary text-white w-full py-3 rounded-lg mt-4 flex justify-center items-center">
+                                <i class="fas fa-save mr-2"></i> Guardar Ingreso
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen General -->
+        <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
+            <h2 class="text-xl font-bold text-purple-300 mb-6 flex items-center">
+                <i class="fas fa-chart-pie mr-2"></i>Resumen Financiero
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-300">Balance Actual</h3>
+                    </div>
+                    <div class="bg-gray-700 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-gray-300">Disponible Total:</span>
+                            <span class="font-bold" id="summary-available">$0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-gray-300">Crédito Utilizado:</span>
+                            <span class="font-bold" id="summary-used">$0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-gray-300">Ahorros Totales:</span>
+                            <span class="font-bold" id="summary-savings">$0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-300">Deuda Total:</span>
+                            <span class="font-bold" id="summary-debt">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-300">Progreso Mensual</h3>
+                    </div>
+                    <div class="bg-gray-700 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-gray-300">Ingresos:</span>
+                            <span class="font-bold" id="summary-income">$0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-gray-300">Gastos:</span>
+                            <span class="font-bold" id="summary-expenses">$0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-300">Balance:</span>
+                            <span class="font-bold" id="summary-balance">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="calculate-totals-btn" class="btn-primary text-white w-full py-3 rounded-lg mt-6 flex justify-center items-center">
+                <i class="fas fa-calculator mr-2"></i> Calcular Totales
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Database
+        let cards = [];
+        let debts = [];
+        let savings = [];
+        let income = [];
+        
+        // Functions to format currency
+        const formatCurrency = (value) => {
+            return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(value);
+        };
+        
+        // Functions to calculate totals
+        const calculateCardTotals = () => {
+            let totalCredit = 0;
+            let totalAvailable = 0;
+            
+            cards.forEach(card => {
+                totalCredit += card.creditLimit;
+                totalAvailable += card.creditLimit;
+            });
+            
+            debts.forEach(debt => {
+                if (debt.linkedCard) {
+                    const card = cards.find(c => c.id === debt.linkedCard);
+                    if (card) {
+                        totalAvailable -= debt.amount;
+                    }
+                }
+            });
+            
+            document.getElementById('total-cards').textContent = cards.length;
+            document.getElementById('total-credit').textContent = formatCurrency(totalCredit);
+            document.getElementById('total-available').textContent = formatCurrency(totalAvailable);
+            
+            // Update summary
+            document.getElementById('summary-available').textContent = formatCurrency(totalAvailable);
+            document.getElementById('summary-used').textContent = formatCurrency(totalCredit - totalAvailable);
+        };
+        
+        const calculateDebtTotals = () => {
+            let totalDebt = 0;
+            let monthlyInterest = 0;
+            let totalMonths = 0;
+            
+            debts.forEach(debt => {
+                totalDebt += debt.amount;
+                monthlyInterest += (debt.amount * debt.interestRate) / 100 / 12;
+                totalMonths += debt.term;
+            });
+            
+            const avgMonths = debts.length > 0 ? Math.round(totalMonths / debts.length) : 0;
+            
+            document.getElementById('total-debt').textContent = formatCurrency(totalDebt);
+            document.getElementById('monthly-interest').textContent = formatCurrency(monthlyInterest);
+            document.getElementById('remaining-term').textContent = `${avgMonths} meses`;
+            
+            // Update summary
+            document.getElementById('summary-debt').textContent = formatCurrency(totalDebt);
+        };
+        
+        const calculateSavingsTotals = () => {
+            let totalSaved = 0;
+            let totalGoal = 0;
+            
+            savings.forEach(saving => {
+                totalSaved += saving.currentAmount;
+                totalGoal += saving.targetAmount;
+            });
+            
+            const progressPercentage = totalGoal > 0 ? Math.round((totalSaved / totalGoal) * 100) : 0;
+            
+            document.getElementById('total-savings').textContent = formatCurrency(totalSaved);
+            document.getElementById('monthly-goal').textContent = formatCurrency(totalGoal);
+            document.getElementById('savings-progress').textContent = `${progressPercentage}%`;
+            
+            // Update summary
+            document.getElementById('summary-savings').textContent = formatCurrency(totalSaved);
+        };
+        
+        const calculateIncomeTotals = () => {
+            let totalIncome = 0;
+            let monthlyIncome = 0;
+            
+            income.forEach(inc => {
+                totalIncome += inc.amount;
+                
+                if (inc.frequency === 'mensual') {
+                    monthlyIncome += inc.amount;
+                } else if (inc.frequency === 'semanal') {
+                    monthlyIncome += inc.amount * 4;
+                } else if (inc.frequency === 'quincenal') {
+                    monthlyIncome += inc.amount * 2;
+                } else if (inc.frequency === 'anual') {
+                    monthlyIncome += inc.amount / 12;
+                } else {
+                    // For one-time income, check if it's from this month
+                    const today = new Date();
+                    const incomeDate = new Date(inc.date);
+                    
+                    if (incomeDate.getMonth() === today.getMonth() && incomeDate.getFullYear() === today.getFullYear()) {
+                        monthlyIncome += inc.amount;
+                    }
+                }
+            });
+            
+            document.getElementById('total-income').textContent = formatCurrency(totalIncome);
+            document.getElementById('monthly-average').textContent = formatCurrency(monthlyIncome);
+            document.getElementById('income-month').textContent = formatCurrency(monthlyIncome);
+            
+            // Update summary
+            document.getElementById('summary-income').textContent = formatCurrency(monthlyIncome);
+            
+            // Calculate balance (income - debts)
+            let totalDebtPayments = 0;
+            debts.forEach(debt => {
+                totalDebtPayments += (debt.amount * debt.interestRate) / 100 / 12;
+            });
+            
+            const balance = monthlyIncome - totalDebtPayments;
+            document.getElementById('summary-balance').textContent = formatCurrency(balance);
+        };
+        
+        // Render functions
+        const renderCards = () => {
+            const container = document.getElementById('cards-container');
+            container.innerHTML = '';
+            
+            if (cards.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-center py-4">No hay tarjetas registradas</p>';
+                return;
+            }
+            
+            cards.forEach(card => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'bg-gray-700 rounded-lg p-4';
+                cardElement.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="font-bold text-purple-300">${card.bankName}</h3>
+                            <p class="text-sm text-gray-400">Termina en ${card.cardNumber.slice(-4)}</p>
+                        </div>
+                        <div class="flex">
+                            <button class="edit-card-btn mr-2 text-purple-400 hover:text-purple-300" data-id="${card.id}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete-card-btn text-red-400 hover:text-red-300" data-id="${card.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-sm mt-4">
+                        <div>
+                            <p class="text-gray-400">Límite:</p>
+                            <p class="font-medium">${formatCurrency(card.creditLimit)}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400">Expira:</p>
+                            <p class="font-medium">${card.expiryDate}</p>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(cardElement);
+            });
+            
+            // Add event listeners for edit and delete buttons
+            document.querySelectorAll('.edit-card-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const cardId = e.currentTarget.getAttribute('data-id');
+                    editCard(cardId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-card-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const cardId = e.currentTarget.getAttribute('data-id');
+                    if (confirm('¿Estás seguro de que quieres eliminar esta tarjeta?')) {
+                        deleteCard(cardId);
+                    }
+                });
+            });
+        };
+        
+        const renderDebts = () => {
+            const container = document.getElementById('debts-container');
+            container.innerHTML = '';
+            
+            if (debts.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-center py-4">No hay deudas registradas</p>';
+                return;
+            }
+            
+            debts.forEach(debt => {
+                const linkedCard = debt.linkedCard ? cards.find(c => c.id === debt.linkedCard) : null;
+                
+                const debtElement = document.createElement('div');
+                debtElement.className = 'bg-gray-700 rounded-lg p-4';
+                debtElement.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="font-bold text-purple-300">${debt.name}</h3>
+                            <p class="text-sm text-gray-400">
+                                ${linkedCard ? `Tarjeta: ${linkedCard.bankName}` : 'Sin tarjeta asociada'}
+                            </p>
+                        </div>
+                        <div class="flex">
+                            <button class="edit-debt-btn mr-2 text-purple-400 hover:text-purple-300" data-id="${debt.id}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete-debt-btn text-red-400 hover:text-red-300" data-id="${debt.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-sm mt-4">
+                        <div>
+                            <p class="text-gray-400">Cantidad:</p>
+                            <p class="font-medium">${formatCurrency(debt.amount)}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400">Interés:</p>
+                            <p class="font-medium">${debt.interestRate}%</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400">Plazo:</p>
+                            <p class="font-medium">${debt.term} meses</p>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(debtElement);
+            });
+            
+            // Add event listeners for edit and delete buttons
+            document.querySelectorAll('.edit-debt-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const debtId = e.currentTarget.getAttribute('data-id');
+                    editDebt(debtId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-debt-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const debtId = e.currentTarget.getAttribute('data-id');
+                    if (confirm('¿Estás seguro de que quieres eliminar esta deuda?')) {
+                        deleteDebt(debtId);
+                    }
+                });
+            });
+        };
+        
+        const renderSavings = () => {
+            const container = document.getElementById('savings-container');
+            container.innerHTML = '';
+            
+            if (savings.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-center py-4">No hay metas de ahorro</p>';
+                return;
+            }
+            
+            savings.forEach(saving => {
+                const progressPercentage = saving.targetAmount > 0 ? 
+                    Math.round((saving.currentAmount / saving.targetAmount) * 100) : 0;
+                
+                const savingElement = document.createElement('div');
+                savingElement.className = 'bg-gray-700 rounded-lg p-4';
+                savingElement.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="font-bold text-purple-300">${saving.name}</h3>
+                            <p class="text-sm text-gray-400">
+                                Meta: ${formatCurrency(saving.targetAmount)}
+                            </p>
+                        </div>
+                        <div class="flex">
+                            <button class="edit-saving-btn mr-2 text-purple-400 hover:text-purple-300" data-id="${saving.id}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete-saving-btn text-red-400 hover:text-red-300" data-id="${saving.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>Ahorrado:</span>
+                            <span>${formatCurrency(saving.currentAmount)} (${progressPercentage}%)</span>
+                        </div>
+                        <div class="w-full bg-gray-600 rounded-full h-2">
+                            <div class="bg-purple-500 h-2 rounded-full" 
+                                 style="width: ${progressPercentage > 100 ? 100 : progressPercentage}%"></div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-sm mt-4">
+                        <div>
+                            <p class="text-gray-400">Fecha objetivo:</p>
+                            <p class="font-medium">${new Date(saving.targetDate).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(savingElement);
+            });
+            
+            // Add event listeners for edit and delete buttons
+            document.querySelectorAll('.edit-saving-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const savingId = e.currentTarget.getAttribute('data-id');
+                    editSaving(savingId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-saving-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const savingId = e.currentTarget.getAttribute('data-id');
+                    if (confirm('¿Estás seguro de que quieres eliminar esta meta de ahorro?')) {
+                        deleteSaving(savingId);
+                    }
+                });
+            });
+        };
+        
+        const renderIncome = () => {
+            const container = document.getElementById('income-container');
+            container.innerHTML = '';
+            
+            if (income.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-center py-4">No hay ingresos registrados</p>';
+                return;
+            }
+            
+            income.forEach(inc => {
+                const incomeElement = document.createElement('div');
+                incomeElement.className = 'bg-gray-700 rounded-lg p-4';
+                incomeElement.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="font-bold text-purple-300">${inc.source}</h3>
+                            <p class="text-sm text-gray-400">
+                                ${inc.frequency.charAt(0).toUpperCase() + inc.frequency.slice(1)}
+                            </p>
+                        </div>
+                        <div class="flex">
+                            <button class="edit-income-btn mr-2 text-purple-400 hover:text-purple-300" data-id="${inc.id}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete-income-btn text-red-400 hover:text-red-300" data-id="${inc.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-sm mt-4">
+                        <div>
+                            <p class="text-gray-400">Cantidad:</p>
+                            <p class="font-medium">${formatCurrency(inc.amount)}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400">Fecha:</p>
+                            <p class="font-medium">${new Date(inc.date).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(incomeElement);
+            });
+            
+            // Add event listeners for edit and delete buttons
+            document.querySelectorAll('.edit-income-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const incomeId = e.currentTarget.getAttribute('data-id');
+                    editIncome(incomeId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-income-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const incomeId = e.currentTarget.getAttribute('data-id');
+                    if (confirm('¿Estás seguro de que quieres eliminar este ingreso?')) {
+                        deleteIncome(incomeId);
+                    }
+                });
+            });
+        };
+        
+        // CRUD operations for cards
+        const addCard = () => {
+            const modal = document.getElementById('card-modal');
+            modal.classList.remove('hidden');
+            
+            // Clear form
+            document.getElementById('bank-name').value = '';
+            document.getElementById('card-number').value = '';
+            document.getElementById('expiry-date').value = '';
+            document.getElementById('cvv').value = '';
+            document.getElementById('credit-limit').value = '';
+        };
+        
+        const editCard = (cardId) => {
+            const card = cards.find(c => c.id === cardId);
+            if (!card) return;
+            
+            const modal = document.getElementById('card-modal');
+            modal.classList.remove('hidden');
+            
+            // Fill form with card data
+            document.getElementById('bank-name').value = card.bankName;
+            document.getElementById('card-number').value = card.cardNumber;
+            document.getElementById('expiry-date').value = card.expiryDate;
+            document.getElementById('cvv').value = card.cvv;
+            document.getElementById('credit-limit').value = card.creditLimit;
+            
+            // Change save button to update
+            const saveBtn = document.getElementById('save-card-btn');
+            saveBtn.setAttribute('data-id', cardId);
+            saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Actualizar Tarjeta';
+        };
+        
+        const saveCard = () => {
+            const bankName = document.getElementById('bank-name').value.trim();
+            const cardNumber = document.getElementById('card-number').value.trim();
+            const expiryDate = document.getElementById('expiry-date').value.trim();
+            const cvv = document.getElementById('cvv').value.trim();
+            const creditLimit = parseFloat(document.getElementById('credit-limit').value) || 0;
+            
+            if (!bankName || !cardNumber || !expiryDate || !cvv) {
+                alert('Por favor completa todos los campos obligatorios');
+                return;
+            }
+            
+            const saveBtn = document.getElementById('save-card-btn');
+            const cardId = saveBtn.getAttribute('data-id');
+            
+            if (cardId) {
+                // Update existing card
+                const cardIndex = cards.findIndex(c => c.id === cardId);
+                if (cardIndex !== -1) {
+                    cards[cardIndex] = {
+                        ...cards[cardIndex],
+                        bankName,
+                        cardNumber,
+                        expiryDate,
+                        cvv,
+                        creditLimit
+                    };
+                }
+            } else {
+                // Add new card
+                const newCard = {
+                    id: Date.now().toString(),
+                    bankName,
+                    cardNumber,
+                    expiryDate,
+                    cvv,
+                    creditLimit
+                };
+                cards.push(newCard);
+            }
+            
+            // Close modal and refresh
+            closeModal('card-modal');
+            renderCards();
+            calculateCardTotals();
+            
+            // Reset save button
+            saveBtn.removeAttribute('data-id');
+            saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Guardar Tarjeta';
+        };
+        
+        const deleteCard = (cardId) => {
+            cards = cards.filter(c => c.id !== cardId);
+            
+            // Also remove any debts linked to this card
+            debts.forEach(debt => {
+                if (debt.linkedCard === cardId) {
+                    debt.linkedCard = null;
+                }
+            });
+            
+            renderCards();
+            calculateCardTotals();
+            renderDebts();
+            calculateDebtTotals();
+        };
+        
+        // CRUD operations for debts
+        const addDebt = () => {
+            const modal = document.getElementById('debt-modal');
+            modal.classList.remove('hidden');
+            
+            // Clear form
+            document.getElementById('debt-name').value = '';
+            document.getElementById('debt-amount').value = '';
+            document.getElementById('debt-interest').value = '';
+            document.getElementById('debt-term').value = '';
+            document.getElementById('link-to-card').checked = false;
+            document.getElementById('card-select').classList.add('hidden');
+            
+            // Populate card select
+            const cardSelect = document.getElementById('card-select');
+            cardSelect.innerHTML = '<option value="">Selecciona una tarjeta</option>';
+            cards.forEach(card => {
+                const option = document.createElement('option');
+                option.value = card.id;
+                option.textContent = `${card.bankName} (Termina en ${card.cardNumber.slice(-4)})`;
+                cardSelect.appendChild(option);
+            });
+        };
+        
+        const editDebt = (debtId) => {
+            const debt = debts.find(d => d.id === debtId);
+            if (!debt) return;
+            
+            const modal = document.getElementById('debt-modal');
+            modal.classList.remove('hidden');
+            
+            // Fill form with debt data
+            document.getElementById('debt-name').value = debt.name;
+            document.getElementById('debt-amount').value = debt.amount;
+            document.getElementById('debt-interest').value = debt.interestRate;
+            document.getElementById('debt-term').value = debt.term;
+            
+            // Update card linking
+            const linkCheckbox = document.getElementById('link-to-card');
+            const cardSelect = document.getElementById('card-select');
+            
+            if (debt.linkedCard) {
+                linkCheckbox.checked = true;
+                cardSelect.classList.remove('hidden');
+                
+                // Populate card select
+                cardSelect.innerHTML = '<option value="">Selecciona una tarjeta</option>';
+                cards.forEach(card => {
+                    const option = document.createElement('option');
+                    option.value = card.id;
+                    option.textContent = `${card.bankName} (Termina en ${card.cardNumber.slice(-4)})`;
+                    option.selected = card.id === debt.linkedCard;
+                    cardSelect.appendChild(option);
+                });
+            } else {
+                linkCheckbox.checked = false;
+                cardSelect.classList.add('hidden');
+            }
+            
+            // Change save button to update
+            const saveBtn = document.getElementById('save-debt-btn');
+            saveBtn.setAttribute('data-id', debtId);
+            saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Actualizar Deuda';
+        };
+        
+        const saveDebt = () => {
+            const name = document.getElementById('debt-name').value.trim();
+            const amount = parseFloat(document.getElementById('debt-amount').value) || 0;
+            const interestRate = parseFloat(document.getElementById('debt-interest').value) || 0;
+            const term = parseInt(document.getElementById('debt-term').value) || 1;
+            const linkToCard = document.getElementById('link-to-card').checked;
+            const cardId = linkToCard ? document.getElementById('card-select').value : null;
+            
+            if (!name || amount <= 0) {
+                alert('Por favor completa todos los campos obligatorios');
+                return;
+            }
+            
+            if (linkToCard && !cardId) {
+                alert('Por favor selecciona una tarjeta');
+                return;
+            }
+            
+            const saveBtn = document.getElementById('save-debt-btn');
+            const debtId = saveBtn.getAttribute('data-id');
+            
+            if (debtId) {
+                // Update existing debt
+                const debtIndex = debts.findIndex(d => d.id === debtId);
+                if (debtIndex !== -1) {
+                    debts[debtIndex] = {
+                        ...debts[debtIndex],
+                        name,
+                        amount,
+                        interestRate,
+                        term,
+                        linkedCard: cardId
+                    };
+                }
+            } else {
+                // Add new debt
+                const newDebt = {
+                    id: Date.now().toString(),
+                    name,
+                    amount,
+                    interestRate,
+                    term,
+                    linkedCard: cardId
+                };
+                debts.push(newDebt);
+            }
+            
+            // Close modal and refresh
+            closeModal('debt-modal');
+            renderDebts();
+            calculateDebtTotals();
+            calculateCardTotals();
+            
+            // Reset save button
+            saveBtn.removeAttribute('data-id');
+            saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Guardar Deuda';
+        };
+        
+        const deleteDebt = (debtId) => {
+            debts = debts.filter(d => d.id !== debtId);
+            renderDebts();
+            calculateDebtTotals();
+            calculateCardTotals();
+        };
+        
+        // CRUD operations for savings
+        const addSaving = () => {
+            const modal = document.getElementById('savings-modal');
+            modal.classList.remove('hidden');
+            
+            // Clear form
+            document.getElementById('savings-name').value = '';
+            document.getElementById('savings-goal').value = '';
+            document.getElementById('savings-current').value = '';
+            
+            // Set default date to one month from now
+            const nextMonth = new Date();
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+            const dateString = nextMonth.toISOString().split('T')[0];
+            document.getElementById('savings-date').value = dateString;
+        };
+        
+        const editSaving = (savingId) => {
+            const saving = savings.find(s => s.id === savingId);
+            if (!saving) return;
+            
+            const modal = document.getElementById('savings-modal');
+            modal.classList.remove('hidden');
+            
+            // Fill form with saving data
+            document.getElementById('savings-name').value = saving.name;
+            document.getElementById('savings-goal').value = saving.targetAmount;
+            document.getElementById('savings-current').value = saving.currentAmount;
+            document.getElementById('savings-date').value = saving.targetDate.split('T')[0];
+            
+            // Change save button to update
+            const saveBtn = document.getElementById('save-savings-btn');
+            saveBtn.setAttribute('data-id', savingId);
+            saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Actualizar Meta';
+        };
+        
+        const saveSaving = () => {
+            const name = document.getElementById('savings-name').value.trim();
+            const targetAmount = parseFloat(document.getElementById('savings-goal').value) || 0;
+            const currentAmount = parseFloat(document.getElementById('savings-current').value) || 0;
+            const targetDate = document.getElementById('savings-date').value;
+            
+            if (!name || targetAmount <= 0) {
+                alert('Por favor completa todos los campos obligatorios');
+                return;
+            }
+            
+            const saveBtn = document.getElementById('save-savings-btn');
+            const savingId = saveBtn.getAttribute('data-id');
+            
+            if (savingId) {
+                // Update existing saving
+                const savingIndex = savings.findIndex(s => s.id === savingId);
+                if (savingIndex !== -1) {
+                    savings[savingIndex] = {
+                        ...savings[savingIndex],
+                        name,
+                        targetAmount,
+                        currentAmount,
+                        targetDate
+                    };
+                }
+            } else {
+                // Add new saving
+                const newSaving = {
+                    id: Date.now().toString(),
+                    name,
+                    targetAmount,
+                    currentAmount,
+                    targetDate
+                };
+                savings.push(newSaving);
+            }
+            
+            // Close modal and refresh
+            closeModal('savings-modal');
+            renderSavings();
+            calculateSavingsTotals();
+            
+            // Reset save button
+            saveBtn.removeAttribute('data-id');
+            saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Guardar Meta';
+        };
+        
+        const deleteSaving = (savingId) => {
+            savings = savings.filter(s => s.id !== savingId);
+            renderSavings();
+            calculateSavingsTotals();
+        };
+        
+        // CRUD operations for income
+        const addIncome = () => {
+            const modal = document.getElementById('income-modal');
+            modal.classList.remove('hidden');
+            
+            // Clear form
+            document.getElementById('income-source').value = '';
+            document.getElementById('income-amount').value = '';
+            document.getElementById('income-date').value = '';
+            document.getElementById('income-frequency').value = 'mensual';
+            
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('income-date').value = today;
+        };
+        
+        const editIncome = (incomeId) => {
+            const inc = income.find(i => i.id === incomeId);
+            if (!inc) return;
+            
+            const modal = document.getElementById('income-modal');
+            modal.classList.remove('hidden');
+            
+            // Fill form with income data
+            document.getElementById('income-source').value = inc.source;
+            document.getElementById('income-amount').value = inc.amount;
+            document.getElementById('income-date').value = inc.date.split('T')[0];
+            document.getElementById('income-frequency').value = inc.frequency;
+            
+            // Change save button to update
+            const saveBtn = document.getElementById('save-income-btn');
+            saveBtn.setAttribute('data-id', incomeId);
+            saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Actualizar Ingreso';
+        };
+        
+        const saveIncome = () => {
+            const source = document.getElementById('income-source').value.trim();
+            const amount = parseFloat(document.getElementById('income-amount').value) || 0;
+            const date = document.getElementById('income-date').value;
+            const frequency = document.getElementById('income-frequency').value;
+            
+            if (!source || amount <= 0) {
+                alert('Por favor completa todos los campos obligatorios');
+                return;
+            }
+            
+            const saveBtn = document.getElementById('save-income-btn');
+            const incomeId = saveBtn.getAttribute('data-id');
+            
+            if (incomeId) {
+                // Update existing income
+                const incomeIndex = income.findIndex(i => i.id === incomeId);
+                if (incomeIndex !== -1) {
+                    income[incomeIndex] = {
+                        ...income[incomeIndex],
+                        source,
+                        amount,
+                        date,
+                        frequency
+                    };
+                }
+            } else {
+                // Add new income
+                const newIncome = {
+                    id: Date.now().toString(),
+                    source,
+                    amount,
+                    date,
+                    frequency
+                };
+                income.push(newIncome);
+            }
+            
+            // Close modal and refresh
+            closeModal('income-modal');
+            renderIncome();
+            calculateIncomeTotals();
+            
+            // Reset save button
+            saveBtn.removeAttribute('data-id');
+            saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Guardar Ingreso';
+        };
+        
+        const deleteIncome = (incomeId) => {
+            income = income.filter(i => i.id !== incomeId);
+            renderIncome();
+            calculateIncomeTotals();
+        };
+        
+        // Helper functions
+        const closeModal = (modalId) => {
+            const modal = document.getElementById(modalId);
+            modal.classList.add('hidden');
+        };
+        
+        const calculateAllTotals = () => {
+            calculateCardTotals();
+            calculateDebtTotals();
+            calculateSavingsTotals();
+            calculateIncomeTotals();
+            
+            // Show success notification
+            alert('¡Todos los totales han sido calculados con éxito!');
+        };
+        
+        // Initialize with sample data
+        const initializeSampleData = () => {
+            // Add 2 sample cards
+            cards = [
+                {
+                    id: '1',
+                    bankName: 'Banco Ejemplo',
+                    cardNumber: '1234567890123456',
+                    expiryDate: '12/25',
+                    cvv: '123',
+                    creditLimit: 15000
+                },
+                {
+                    id: '2',
+                    bankName: 'Otro Banco',
+                    cardNumber: '9876543210987654',
+                    expiryDate: '06/24',
+                    cvv: '456',
+                    creditLimit: 20000
+                }
+            ];
+            
+            // Add 1 sample debt
+            debts = [
+                {
+                    id: '1',
+                    name: 'Préstamo Automóvil',
+                    amount: 5000,
+                    interestRate: 12,
+                    term: 24,
+                    linkedCard: '1'
+                }
+            ];
+            
+            // Add 1 sample savings
+            savings = [
+                {
+                    id: '1',
+                    name: 'Fondo de Emergencia',
+                    targetAmount: 30000,
+                    currentAmount: 15000,
+                    targetDate: '2024-12-31'
+                }
+            ];
+            
+            // Add 2 sample income
+            income = [
+                {
+                    id: '1',
+                    source: 'Salario',
+                    amount: 20000,
+                    date: '2023-06-15',
+                    frequency: 'mensual'
+                },
+                {
+                    id: '2',
+                    source: 'Freelance',
+                    amount: 5000,
+                    date: '2023-06-20',
+                    frequency: 'mensual'
+                }
+            ];
+            
+            // Render all sections
+            renderCards();
+            renderDebts();
+            renderSavings();
+            renderIncome();
+            
+            // Calculate all totals
+            calculateAllTotals();
+        };
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Card-related
+            document.getElementById('add-card-btn').addEventListener('click', addCard);
+            document.getElementById('close-card-modal').addEventListener('click', () => closeModal('card-modal'));
+            document.getElementById('save-card-btn').addEventListener('click', saveCard);
+            
+            // Debt-related
+            document.getElementById('add-debt-btn').addEventListener('click', addDebt);
+            document.getElementById('close-debt-modal').addEventListener('click', () => closeModal('debt-modal'));
+            document.getElementById('save-debt-btn').addEventListener('click', saveDebt);
+            document.getElementById('link-to-card').addEventListener('change', (e) => {
+                const cardSelect = document.getElementById('card-select');
+                if (e.target.checked) {
+                    cardSelect.classList.remove('hidden');
+                } else {
+                    cardSelect.classList.add('hidden');
+                }
+            });
+            
+            // Savings-related
+            document.getElementById('add-savings-btn').addEventListener('click', addSaving);
+            document.getElementById('close-savings-modal').addEventListener('click', () => closeModal('savings-modal'));
+            document.getElementById('save-savings-btn').addEventListener('click', saveSaving);
+            
+            // Income-related
+            document.getElementById('add-income-btn').addEventListener('click', addIncome);
+            document.getElementById('close-income-modal').addEventListener('click', () => closeModal('income-modal'));
+            document.getElementById('save-income-btn').addEventListener('click', saveIncome);
+            
+            // Calculate all totals button
+            document.getElementById('calculate-totals-btn').addEventListener('click', calculateAllTotals);
+            
+            // Theme toggle
+            document.getElementById('theme-toggle').addEventListener('click', () => {
+                const icon = document.querySelector('#theme-toggle i');
+                if (icon.classList.contains('fa-moon')) {
+                    icon.classList.remove('fa-moon');
+                    icon.classList.add('fa-sun');
+                    document.body.classList.add('bg-gray-100');
+                    document.body.classList.remove('bg-gray-900');
+                } else {
+                    icon.classList.remove('fa-sun');
+                    icon.classList.add('fa-moon');
+                    document.body.classList.remove('bg-gray-100');
+                    document.body.classList.add('bg-gray-900');
+                }
+            });
+            
+            // Initialize with sample data
+            initializeSampleData();
+        });
+    </script>
+</body>
+</html>
